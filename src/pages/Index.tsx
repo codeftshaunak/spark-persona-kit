@@ -2,15 +2,25 @@ import { PersonaCard } from "@/components/PersonaCard";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { FeatureCard } from "@/components/FeatureCard";
-import { personas } from "@/data/personas";
+import { usePersonas } from "@/hooks/usePersonas";
 import { Button } from "@/components/ui/button";
-import { Sparkles, Zap, Shield, Users, MessageSquare, TrendingUp, ArrowRight } from "lucide-react";
+import {
+  Sparkles,
+  Zap,
+  Shield,
+  Users,
+  MessageSquare,
+  TrendingUp,
+  ArrowRight,
+} from "lucide-react";
 
 const Index = () => {
+  const { personas, loading, error } = usePersonas();
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Header />
-      
+
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero opacity-10"></div>
@@ -19,16 +29,23 @@ const Index = () => {
           <div className="text-center max-w-4xl mx-auto animate-fade-in">
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary mb-6 border border-primary/20">
               <Sparkles className="w-4 h-4" />
-              <span className="text-sm font-medium">Next-Generation AI Conversations</span>
+              <span className="text-sm font-medium">
+                Next-Generation AI Conversations
+              </span>
             </div>
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-hero bg-clip-text text-transparent leading-tight">
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 text-foreground leading-tight py-8">
               Meet Your Perfect AI Companion
             </h1>
             <p className="text-xl md:text-2xl text-muted-foreground mb-10 leading-relaxed">
-              Connect with specialized AI personas designed for your unique needs. From creative brainstorming to technical guidance, find the perfect assistant to elevate your work.
+              Connect with specialized AI personas designed for your unique
+              needs. From creative brainstorming to technical guidance, find the
+              perfect assistant to elevate your work.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow text-lg px-8">
+              <Button
+                size="lg"
+                className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow text-lg px-8"
+              >
                 Get Started Free
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
@@ -36,7 +53,9 @@ const Index = () => {
                 View Personas
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground mt-6">No credit card required • Free forever</p>
+            <p className="text-sm text-muted-foreground mt-6">
+              No credit card required • Free forever
+            </p>
           </div>
         </div>
       </section>
@@ -48,7 +67,8 @@ const Index = () => {
             Why Choose Persona AI?
           </h2>
           <p className="text-xl text-muted-foreground">
-            Experience the future of AI-powered conversations with cutting-edge features
+            Experience the future of AI-powered conversations with cutting-edge
+            features
           </p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -97,15 +117,27 @@ const Index = () => {
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {personas.map((persona, index) => (
-              <div
-                key={persona.id}
-                className="animate-fade-in"
-                style={{ animationDelay: `${index * 100}ms` }}
-              >
-                <PersonaCard persona={persona} />
+            {loading ? (
+              <div className="col-span-full text-center py-8">
+                <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto"></div>
+                <p className="mt-4 text-muted-foreground">Loading personas...</p>
               </div>
-            ))}
+            ) : error ? (
+              <div className="col-span-full text-center py-8">
+                <p className="text-red-500 mb-4">Failed to load personas: {error}</p>
+                <Button onClick={() => window.location.reload()}>Try Again</Button>
+              </div>
+            ) : (
+              personas.map((persona, index) => (
+                <div
+                  key={persona.persona_id}
+                  className="animate-fade-in"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  <PersonaCard persona={persona} />
+                </div>
+              ))
+            )}
           </div>
         </div>
       </section>
@@ -125,27 +157,36 @@ const Index = () => {
             <div className="w-16 h-16 rounded-full bg-gradient-primary flex items-center justify-center text-primary-foreground text-2xl font-bold mx-auto mb-4 shadow-glow">
               1
             </div>
-            <h3 className="text-xl font-semibold mb-2 text-foreground">Choose Your Persona</h3>
+            <h3 className="text-xl font-semibold mb-2 text-foreground">
+              Choose Your Persona
+            </h3>
             <p className="text-muted-foreground">
-              Browse our collection of specialized AI assistants and select the one that matches your needs.
+              Browse our collection of specialized AI assistants and select the
+              one that matches your needs.
             </p>
           </div>
           <div className="text-center">
             <div className="w-16 h-16 rounded-full bg-gradient-secondary flex items-center justify-center text-secondary-foreground text-2xl font-bold mx-auto mb-4 shadow-glow">
               2
             </div>
-            <h3 className="text-xl font-semibold mb-2 text-foreground">Start Conversing</h3>
+            <h3 className="text-xl font-semibold mb-2 text-foreground">
+              Start Conversing
+            </h3>
             <p className="text-muted-foreground">
-              Begin chatting immediately. Ask questions, seek advice, or brainstorm ideas together.
+              Begin chatting immediately. Ask questions, seek advice, or
+              brainstorm ideas together.
             </p>
           </div>
           <div className="text-center">
             <div className="w-16 h-16 rounded-full bg-gradient-primary flex items-center justify-center text-primary-foreground text-2xl font-bold mx-auto mb-4 shadow-glow">
               3
             </div>
-            <h3 className="text-xl font-semibold mb-2 text-foreground">Achieve Your Goals</h3>
+            <h3 className="text-xl font-semibold mb-2 text-foreground">
+              Achieve Your Goals
+            </h3>
             <p className="text-muted-foreground">
-              Get expert assistance and insights to help you accomplish tasks faster and better.
+              Get expert assistance and insights to help you accomplish tasks
+              faster and better.
             </p>
           </div>
         </div>
@@ -160,9 +201,13 @@ const Index = () => {
               Ready to Transform Your Workflow?
             </h2>
             <p className="text-xl text-muted-foreground mb-8">
-              Join thousands of users already experiencing the power of specialized AI personas
+              Join thousands of users already experiencing the power of
+              specialized AI personas
             </p>
-            <Button size="lg" className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow text-lg px-8">
+            <Button
+              size="lg"
+              className="bg-gradient-primary text-primary-foreground hover:opacity-90 shadow-glow text-lg px-8"
+            >
               Start Your Free Trial
               <ArrowRight className="w-5 h-5 ml-2" />
             </Button>

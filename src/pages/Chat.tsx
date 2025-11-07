@@ -3,20 +3,17 @@ import { useParams, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { ArrowLeft, Send, Bot, User } from "lucide-react";
-import { personas } from "@/data/personas";
-
-interface Message {
-  role: "user" | "assistant";
-  content: string;
-}
+import { ArrowLeft, Send, Bot, User, AlertCircle } from "lucide-react";
+import { usePersona } from "@/hooks/usePersonas";
+import { chatAPI, ChatMessage } from "@/services/api";
 
 export default function Chat() {
   const { personaId } = useParams();
-  const persona = personas.find((p) => p.id === personaId);
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { persona, loading, error } = usePersona(personaId || "");
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [chatError, setChatError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -39,36 +36,90 @@ export default function Chat() {
   }, [persona]);
 
   const handleSend = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() || !persona) return;
 
-    const userMessage: Message = { role: "user", content: input };
+    const userMessage: ChatMessage = {
+      role: "user",
+      content: input,
+      timestamp: new Date().toISOString()
+    };
+
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setIsTyping(true);
+    setChatError(null);
 
-    // Simulate AI response - replace with actual AI integration
-    setTimeout(() => {
-      const responses = [
-        "That's a great question! Let me help you with that.",
-        "I understand what you're asking. Here's my perspective...",
-        "Interesting point! Based on my expertise, I'd say...",
-        "Thanks for sharing that. Let me provide some insights.",
-      ];
-      const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-      
-      setMessages((prev) => [
-        ...prev,
-        { role: "assistant", content: randomResponse },
-      ]);
+    try {
+      // Get conversation history (excluding current message)
+      const conversationHistory = messages.slice(); // All previous messages
+
+      // Try real OpenAI chat first, fallback to test mode
+      let response;
+      try {
+        response = await chatAPI.chatWithPersona({
+          persona_id: persona.persona_id,
+          message: userMessage.content,
+          conversation_history: conversationHistory,
+          temperature: 0.7,
+          max_tokens: 500
+        });
+      } catch (openaiError) {
+        console.log('OpenAI failed, falling back to test mode:', openaiError);
+        // Fallback to test mode if OpenAI fails (no API key, rate limits, etc.)
+        response = await chatAPI.testChatWithPersona({
+          persona_id: persona.persona_id,
+          message: userMessage.content
+        });
+      }
+
+      if (response.success && response.message) {
+        const assistantMessage: ChatMessage = {
+          role: "assistant",
+          content: response.message,
+          timestamp: response.timestamp
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+      } else {
+        throw new Error(response.error || 'Failed to get response');
+      }
+    } catch (error) {
+      console.error('Chat error:', error);
+      setChatError(error instanceof Error ? error.message : 'Failed to send message');
+
+      // Add error message to chat
+      const errorMessage: ChatMessage = {
+        role: "assistant",
+        content: "Sorry, I'm having trouble responding right now. Please try again.",
+        timestamp: new Date().toISOString()
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 1000);
+    }
   };
 
-  if (!persona) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Card className="p-8 text-center">
-          <h2 className="text-2xl font-bold mb-4 text-foreground">Persona not found</h2>
+          <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading persona...</p>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error || !persona) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Card className="p-8 text-center">
+          <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold mb-4 text-foreground">
+            {error ? 'Error loading persona' : 'Persona not found'}
+          </h2>
+          <p className="text-muted-foreground mb-4">
+            {error || `Persona "${personaId}" could not be found.`}
+          </p>
           <Link to="/">
             <Button>Back to Home</Button>
           </Link>
@@ -96,6 +147,16 @@ export default function Chat() {
           </div>
         </div>
       </header>
+
+      {/* Chat Error Display */}
+      {chatError && (
+        <div className="bg-red-50 border-l-4 border-red-400 p-4 mx-4 mt-2">
+          <div className="flex">
+            <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
+            <p className="text-red-700 text-sm">{chatError}</p>
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-6">
