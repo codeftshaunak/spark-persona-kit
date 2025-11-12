@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:8000/api/v1';
+const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:8000';
 
 export interface Persona {
   id: number;
@@ -30,11 +30,14 @@ export interface UpdatePersonaRequest {
 }
 
 class PersonaAPI {
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
     const config: RequestInit = {
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...options.headers,
       },
       ...options,
@@ -49,13 +52,13 @@ class PersonaAPI {
 
       return await response.json();
     } catch (error) {
-      console.error('API request failed:', error);
+      console.error("API request failed:", error);
       throw error;
     }
   }
 
   async getAllPersonas(): Promise<Persona[]> {
-    return this.request<Persona[]>('/personas/');
+    return this.request<Persona[]>("/personas/");
   }
 
   async getPersona(personaId: string): Promise<Persona> {
@@ -63,34 +66,37 @@ class PersonaAPI {
   }
 
   async createPersona(persona: CreatePersonaRequest): Promise<Persona> {
-    return this.request<Persona>('/personas/', {
-      method: 'POST',
+    return this.request<Persona>("/personas/", {
+      method: "POST",
       body: JSON.stringify(persona),
     });
   }
 
-  async updatePersona(personaId: string, persona: UpdatePersonaRequest): Promise<Persona> {
+  async updatePersona(
+    personaId: string,
+    persona: UpdatePersonaRequest
+  ): Promise<Persona> {
     return this.request<Persona>(`/personas/${personaId}`, {
-      method: 'PUT',
+      method: "PUT",
       body: JSON.stringify(persona),
     });
   }
 
   async deletePersona(personaId: string): Promise<{ message: string }> {
     return this.request<{ message: string }>(`/personas/${personaId}`, {
-      method: 'DELETE',
+      method: "DELETE",
     });
   }
 
   async deactivatePersona(personaId: string): Promise<Persona> {
     return this.request<Persona>(`/personas/${personaId}/deactivate`, {
-      method: 'PATCH',
+      method: "PATCH",
     });
   }
 }
 
 export interface ChatMessage {
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
   timestamp?: string;
 }
@@ -115,11 +121,14 @@ export interface ChatResponse {
 }
 
 class ChatAPI {
-  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  private async request<T>(
+    endpoint: string,
+    options: RequestInit = {}
+  ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
     const config: RequestInit = {
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
         ...options.headers,
       },
       ...options,
@@ -134,21 +143,26 @@ class ChatAPI {
 
       return await response.json();
     } catch (error) {
-      console.error('Chat API request failed:', error);
+      console.error("Chat API request failed:", error);
       throw error;
     }
   }
 
   async chatWithPersona(chatRequest: ChatRequest): Promise<ChatResponse> {
-    return this.request<ChatResponse>('/chat/', {
-      method: 'POST',
+    return this.request<ChatResponse>("/chat/", {
+      method: "POST",
       body: JSON.stringify(chatRequest),
     });
   }
 
-  async testChatWithPersona(chatRequest: Omit<ChatRequest, 'conversation_history' | 'max_tokens' | 'temperature'>): Promise<ChatResponse> {
-    return this.request<ChatResponse>('/chat/test', {
-      method: 'POST',
+  async testChatWithPersona(
+    chatRequest: Omit<
+      ChatRequest,
+      "conversation_history" | "max_tokens" | "temperature"
+    >
+  ): Promise<ChatResponse> {
+    return this.request<ChatResponse>("/chat/test", {
+      method: "POST",
       body: JSON.stringify(chatRequest),
     });
   }
